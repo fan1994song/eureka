@@ -72,6 +72,9 @@ public class EndpointUtils {
      * @return The list of all eureka service urls for the eureka client to talk to.
      */
     public static List<String> getDiscoveryServiceUrls(EurekaClientConfig clientConfig, String zone, ServiceUrlRandomizer randomizer) {
+        /**
+         * 根据DNS或者配置信息解析出所有server服务urls
+         */
         boolean shouldUseDns = clientConfig.shouldUseDnsForFetchingServiceUrls();
         if (shouldUseDns) {
             return getServiceUrlsFromDNS(clientConfig, zone, clientConfig.shouldPreferSameZoneEureka(), randomizer);

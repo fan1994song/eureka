@@ -192,7 +192,7 @@ public class DefaultEurekaServerConfig implements EurekaServerConfig {
 
     /*
      * (non-Javadoc)
-     *
+     * 是否开启自我保护模式。
      * @see com.netflix.eureka.EurekaServerConfig#shouldEnableSelfPreservation()
      */
     @Override
@@ -203,7 +203,7 @@ public class DefaultEurekaServerConfig implements EurekaServerConfig {
 
     /*
      * (non-Javadoc)
-     *
+     * Eureka-Server 集群节点更新频率，默认值：10分钟
      * @see
      * com.netflix.eureka.EurekaServerConfig#getPeerEurekaNodesUpdateInterval()
      */
@@ -241,6 +241,10 @@ public class DefaultEurekaServerConfig implements EurekaServerConfig {
                 namespace + "renewalPercentThreshold", 0.85).get();
     }
 
+    /**
+     * 开启自我保护模式比例
+     * @return
+     */
     @Override
     public boolean shouldEnableReplicatedRequestCompression() {
         return configInstance.getBooleanProperty(
@@ -260,6 +264,10 @@ public class DefaultEurekaServerConfig implements EurekaServerConfig {
                 (30 * 1000)).get();
     }
 
+    /**
+     * Eureka-Server 启动时，从远程 Eureka-Server 读取不到注册信息时，多长时间不允许 Eureka-Client 访问
+     * @return
+     */
     @Override
     public int getWaitTimeInMsWhenSyncEmpty() {
         return configInstance.getIntProperty(
@@ -310,6 +318,10 @@ public class DefaultEurekaServerConfig implements EurekaServerConfig {
                 .get();
     }
 
+    /**
+     * 续约过期定时任务执行频率（默认60秒）
+     * @return
+     */
     @Override
     public long getEvictionIntervalTimerInMs() {
         return configInstance.getLongProperty(
@@ -426,12 +438,20 @@ public class DefaultEurekaServerConfig implements EurekaServerConfig {
                 namespace + "minThreadsForPeerReplication", 5).get();
     }
 
+    /**
+     * 同步复制client实例到其他server应用实例的最大线程数
+     * @return
+     */
     @Override
     public int getMaxThreadsForPeerReplication() {
         return configInstance.getIntProperty(
                 namespace + "maxThreadsForPeerReplication", 20).get();
     }
 
+    /**
+     * 执行单个同步应用实例信息状态任务最大时间，默认值30秒
+     * @return
+     */
     @Override
     public int getMaxTimeForReplication() {
         return configInstance.getIntProperty(

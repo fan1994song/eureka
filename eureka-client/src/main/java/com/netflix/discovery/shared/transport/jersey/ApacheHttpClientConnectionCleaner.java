@@ -40,6 +40,9 @@ public class ApacheHttpClientConnectionCleaner {
 
     private static final Logger logger = LoggerFactory.getLogger(ApacheHttpClientConnectionCleaner.class);
 
+    /**
+     * 30秒清理一次
+     */
     private static final int HTTP_CONNECTION_CLEANER_INTERVAL_MS = 30 * 1000;
 
     private final ScheduledExecutorService eurekaConnCleaner =

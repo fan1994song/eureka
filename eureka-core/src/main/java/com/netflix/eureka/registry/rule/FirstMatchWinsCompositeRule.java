@@ -34,12 +34,14 @@ public class FirstMatchWinsCompositeRule implements InstanceStatusOverrideRule {
     public StatusOverrideResult apply(InstanceInfo instanceInfo,
                                       Lease<InstanceInfo> existingLease,
                                       boolean isReplication) {
+        // 传入规则，只要存在匹配，则返回覆盖状态
         for (int i = 0; i < this.rules.length; ++i) {
             StatusOverrideResult result = this.rules[i].apply(instanceInfo, existingLease, isReplication);
             if (result.matches()) {
                 return result;
             }
         }
+        // 无匹配，返回默认规则的执行结果
         return defaultRule.apply(instanceInfo, existingLease, isReplication);
     }
 

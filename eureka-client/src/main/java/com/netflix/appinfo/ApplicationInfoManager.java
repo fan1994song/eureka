@@ -161,7 +161,8 @@ public class ApplicationInfoManager {
      * Set the status of this instance. Application can use this to indicate
      * whether it is ready to receive traffic. Setting the status here also notifies all registered listeners
      * of a status change event.
-     *
+     * 当实例状态变更时,通过观察者模式，以事件监听的形式去通知，监听者完成状态变更的业务操作
+     * 在此处，会通过InstanceInfoReplicator发起实例状态变更的HTTP请求，完成对eureka Server的通知操作
      * @param status Status of the instance
      */
     public synchronized void setInstanceStatus(InstanceStatus status) {
@@ -194,7 +195,7 @@ public class ApplicationInfoManager {
      * Refetches the hostname to check if it has changed. If it has, the entire
      * <code>DataCenterInfo</code> is refetched and passed on to the eureka
      * server on next heartbeat.
-     *
+     * 重新获取主机名以检查它是否已更改。 如果有，整个DataCenterInfo被重新获取并在下一次心跳时传递给 eureka 服务器
      * see {@link InstanceInfo#getHostName()} for explanation on why the hostname is used as the default address
      */
     public void refreshDataCenterInfoIfRequired() {
@@ -205,15 +206,22 @@ public class ApplicationInfoManager {
             existingSpotInstanceAction = ((AmazonInfo) instanceInfo.getDataCenterInfo()).get(AmazonInfo.MetaDataKey.spotInstanceAction);
         }
 
+        // 读取实例最新配置
         String newAddress;
         if (config instanceof RefreshableInstanceConfig) {
             // Refresh data center info, and return up to date address
+            // 刷新数据中心信息，并返回最新地址
             newAddress = ((RefreshableInstanceConfig) config).resolveDefaultAddress(true);
         } else {
+            /**
+             * 一般情况下，我们使用的是非 RefreshableInstanceConfig 实现的配置类( 一般是 MyDataCenterInstanceConfig )，
+             * 因为 AbstractInstanceConfig.hostInfo 是静态属性，即使本机修改了 IP 等信息，Eureka-Client 进程也不会感知到
+             */
             newAddress = config.getHostName(true);
         }
         String newIp = config.getIpAddress();
 
+        // 若新地址不等于已存在的地址，更新实例的hostname、ip、数据中心
         if (newAddress != null && !newAddress.equals(existingAddress)) {
             logger.warn("The address changed from : {} => {}", existingAddress, newAddress);
             updateInstanceInfo(newAddress, newIp);
@@ -250,6 +258,7 @@ public class ApplicationInfoManager {
         if (leaseInfo == null) {
             return;
         }
+        // 移除实例时间间隔（90秒）、发送心跳频率（30秒），若不一样，刷新变更当前实例的续租实例属性
         int currentLeaseDuration = config.getLeaseExpirationDurationInSeconds();
         int currentLeaseRenewal = config.getLeaseRenewalIntervalInSeconds();
         if (leaseInfo.getDurationInSecs() != currentLeaseDuration || leaseInfo.getRenewalIntervalInSecs() != currentLeaseRenewal) {

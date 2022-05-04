@@ -24,7 +24,7 @@ import static com.netflix.discovery.EurekaClientNames.METRIC_RESOLVER_PREFIX;
 /**
  * An async resolver that keeps a cached version of the endpoint list value for gets, and updates this cache
  * periodically in a different thread.
- *
+ * 异步执行解析的集群解析器
  * @author David Liu
  */
 public class AsyncResolver<T extends EurekaEndpoint> implements ClosableResolver<T> {

@@ -41,15 +41,44 @@ public abstract class AbstractInstanceConfig implements EurekaInstanceConfig {
      */
     @Deprecated
     public static final String DEFAULT_NAMESPACE = CommonConstants.DEFAULT_CONFIG_NAMESPACE;
-    
+
+    /**
+     * 租赁过期时间(秒)
+     */
     private static final int LEASE_EXPIRATION_DURATION_SECONDS = 90;
+    /**
+     * 续租间隔(秒)
+     */
     private static final int LEASE_RENEWAL_INTERVAL_SECONDS = 30;
+    /**
+     * 应用 http 端口关闭
+     */
     private static final boolean SECURE_PORT_ENABLED = false;
+    /**
+     * 应用 http 端口开启
+     */
     private static final boolean NON_SECURE_PORT_ENABLED = true;
+    /**
+     * 应用 http 端口
+     */
     private static final int NON_SECURE_PORT = 80;
+    /**
+     * 应用 https 端口
+     */
     private static final int SECURE_PORT = 443;
+    /**
+     * 应用初始化后开启
+     */
     private static final boolean INSTANCE_ENABLED_ON_INIT = false;
+    /**
+     * 主机信息
+     * key：主机 IP 地址
+     * value：主机名
+     */
     private static final Pair<String, String> hostInfo = getHostInfo();
+    /**
+     * 数据中心信息
+     */
     private DataCenterInfo info = new DataCenterInfo() {
         @Override
         public Name getName() {
@@ -212,7 +241,7 @@ public abstract class AbstractInstanceConfig implements EurekaInstanceConfig {
     }
 
     public boolean shouldBroadcastPublicIpv4Addr () { return false; }
-
+    // 获取主机的IP地址、主机名
     private static Pair<String, String> getHostInfo() {
         Pair<String, String> pair;
         try {

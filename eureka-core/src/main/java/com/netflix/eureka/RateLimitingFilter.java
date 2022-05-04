@@ -129,7 +129,9 @@ public class RateLimitingFilter implements Filter {
 
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
+        // 获取请求的所属类型
         Target target = getTarget(request);
+        // other类型不过滤
         if (target == Target.Other) {
             chain.doFilter(request, response);
             return;
@@ -137,8 +139,11 @@ public class RateLimitingFilter implements Filter {
 
         HttpServletRequest httpRequest = (HttpServletRequest) request;
 
+        // 判断是否限流
         if (isRateLimited(httpRequest, target)) {
+            // 监控
             incrementStats(target);
+            // 若开启限流，则设置返回的response状态为503，当前服务不可用
             if (serverConfig.isRateLimiterEnabled()) {
                 ((HttpServletResponse) response).setStatus(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
                 return;
@@ -173,10 +178,12 @@ public class RateLimitingFilter implements Filter {
     }
 
     private boolean isRateLimited(HttpServletRequest request, Target target) {
+        // 判断是否是特权应用
         if (isPrivileged(request)) {
             logger.debug("Privileged {} request", target);
             return false;
         }
+        // 判断是否限流
         if (isOverloaded(target)) {
             logger.debug("Overloaded {} request; discarding it", target);
             return true;
@@ -195,11 +202,14 @@ public class RateLimitingFilter implements Filter {
     }
 
     private boolean isOverloaded(Target target) {
+        // 限流桶大小，默认值10
         int maxInWindow = serverConfig.getRateLimiterBurstSize();
+        // 每秒产生500个令牌
         int fetchWindowSize = serverConfig.getRateLimiterRegistryFetchAverageRate();
         boolean overloaded = !registryFetchRateLimiter.acquire(maxInWindow, fetchWindowSize);
 
         if (target == Target.FullFetch) {
+            // 每秒产生100个令牌（全量的操作，单独再过滤下）
             int fullFetchWindowSize = serverConfig.getRateLimiterFullFetchAverageRate();
             overloaded |= !registryFullFetchRateLimiter.acquire(maxInWindow, fullFetchWindowSize);
         }

@@ -11,7 +11,13 @@ import java.util.List;
  */
 public class AwsEndpoint extends DefaultEndpoint {
 
+    /**
+     * 区域
+     */
     protected final String zone;
+    /**
+     * 可用区
+     */
     protected final String region;
 
     public AwsEndpoint(String serviceURI, String region, String zone) {

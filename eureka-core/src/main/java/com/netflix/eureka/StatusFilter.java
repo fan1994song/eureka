@@ -59,6 +59,8 @@ public class StatusFilter implements Filter {
                          FilterChain chain) throws IOException, ServletException {
         InstanceInfo myInfo = ApplicationInfoManager.getInstance().getInfo();
         InstanceStatus status = myInfo.getStatus();
+
+        // 实例状态check，当 Eureka-Server 未处于开启状态且response是HttpServletResponse时，设置错误返回状态
         if (status != InstanceStatus.UP && response instanceof HttpServletResponse) {
             HttpServletResponse httpResponse = (HttpServletResponse) response;
             httpResponse.sendError(SC_TEMPORARY_REDIRECT,

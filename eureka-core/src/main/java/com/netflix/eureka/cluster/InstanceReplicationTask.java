@@ -6,7 +6,7 @@ import com.netflix.eureka.registry.PeerAwareInstanceRegistryImpl.Action;
 
 /**
  * Base {@link ReplicationTask} class for instance related replication requests.
- *
+ * 同步操作任务
  * @author Tomasz Bak
  */
 public abstract class InstanceReplicationTask extends ReplicationTask {

@@ -75,9 +75,11 @@ public class RedirectingEurekaHttpClient extends EurekaHttpClientDecorator {
     protected <R> EurekaHttpResponse<R> execute(RequestExecutor<R> requestExecutor) {
         EurekaHttpClient currentEurekaClient = delegateRef.get();
         if (currentEurekaClient == null) {
+            // 未找到非 302 的 Eureka-Server
             AtomicReference<EurekaHttpClient> currentEurekaClientRef = new AtomicReference<>(factory.newClient(serviceEndpoint));
             try {
                 EurekaHttpResponse<R> response = executeOnNewServer(requestExecutor, currentEurekaClientRef);
+                // 关闭原有的委托 EurekaHttpClient ，并设置当前成功非 302 请求的 EurekaHttpClient
                 TransportUtils.shutdown(delegateRef.getAndSet(currentEurekaClientRef.get()));
                 return response;
             } catch (Exception e) {
@@ -87,6 +89,7 @@ public class RedirectingEurekaHttpClient extends EurekaHttpClientDecorator {
                 throw e;
             }
         } else {
+            // 已经找到非 302 的 Eureka-Server
             try {
                 return requestExecutor.execute(currentEurekaClient);
             } catch (Exception e) {

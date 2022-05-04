@@ -74,10 +74,19 @@ public class PeerEurekaNode {
     public static final String HEADER_REPLICATION = "x-netflix-discovery-replication";
 
     private final String serviceUrl;
+    /**
+     * server配置信息
+     */
     private final EurekaServerConfig config;
     private final long maxProcessingDelayMs;
+    /**
+     * 应用实例注册表
+     */
     private final PeerAwareInstanceRegistry registry;
     private final String targetHost;
+    /**
+     * 复制client：server间数据同步使用的Httpclient
+     */
     private final HttpReplicationClient replicationClient;
 
     private final TaskDispatcher<String, ReplicationTask> batchingDispatcher;
@@ -101,6 +110,9 @@ public class PeerEurekaNode {
 
         String batcherName = getBatcherName();
         ReplicationTaskProcessor taskProcessor = new ReplicationTaskProcessor(targetHost, replicationClient);
+        /**
+         * 创建批量任务执行器
+         */
         this.batchingDispatcher = TaskDispatchers.createBatchingTaskDispatcher(
                 batcherName,
                 config.getMaxElementsInPeerReplicationPool(),
@@ -111,6 +123,9 @@ public class PeerEurekaNode {
                 retrySleepTimeMs,
                 taskProcessor
         );
+        /**
+         * 创建单任务执行器
+         */
         this.nonBatchingDispatcher = TaskDispatchers.createNonBatchingTaskDispatcher(
                 targetHost,
                 config.getMaxElementsInStatusReplicationPool(),
@@ -132,6 +147,7 @@ public class PeerEurekaNode {
      * @throws Exception
      */
     public void register(final InstanceInfo info) throws Exception {
+        // 当前时间+30（续约间隔)，超时，则发送心跳时，同步
         long expiryTime = System.currentTimeMillis() + getLeaseRenewalOf(info);
         batchingDispatcher.process(
                 taskId("register", info),
@@ -166,6 +182,7 @@ public class PeerEurekaNode {
 
                     @Override
                     public void handleFailure(int statusCode, Object responseEntity) throws Throwable {
+                        // 404时，再次输出日志
                         super.handleFailure(statusCode, responseEntity);
                         if (statusCode == 404) {
                             logger.warn("{}: missing entry.", getTaskName());
@@ -199,6 +216,10 @@ public class PeerEurekaNode {
             replicationClient.sendHeartBeat(appName, id, info, overriddenStatus);
             return;
         }
+        /**
+         * 心跳重写了执行、失败处理
+         * Eureka 通过 Heartbeat 实现 Eureka-Server 集群同步的最终一致性
+         */
         ReplicationTask replicationTask = new InstanceReplicationTask(targetHost, Action.Heartbeat, info, overriddenStatus, false) {
             @Override
             public EurekaHttpResponse<InstanceInfo> execute() throws Throwable {
@@ -208,6 +229,7 @@ public class PeerEurekaNode {
             @Override
             public void handleFailure(int statusCode, Object responseEntity) throws Throwable {
                 super.handleFailure(statusCode, responseEntity);
+                // 状态码404输出日志，被任务server当前不存在该实例，发起注册当前node的实例的请求（兜底操作，防止网络波动，导致server不存在某个实例）
                 if (statusCode == 404) {
                     logger.warn("{}: missing entry.", getTaskName());
                     if (info != null) {
@@ -216,6 +238,7 @@ public class PeerEurekaNode {
                         register(info);
                     }
                 } else if (config.shouldSyncWhenTimestampDiffers()) {
+                    // node的lastDirtyTimestamp小于，则覆盖当前node的实例
                     InstanceInfo peerInstanceInfo = (InstanceInfo) responseEntity;
                     if (peerInstanceInfo != null) {
                         syncInstancesIfTimestampDiffers(appName, id, info, peerInstanceInfo);

@@ -58,6 +58,7 @@ public class ServerRequestAuthFilter implements Filter {
     }
 
     protected void logAuth(ServletRequest request) {
+        // 是否开启请求认证，配合 Netflix Servo 实现监控信息采集（基于内存数据采集）
         if (serverConfig.shouldLogIdentityHeaders()) {
             if (request instanceof HttpServletRequest) {
                 HttpServletRequest httpRequest = (HttpServletRequest) request;

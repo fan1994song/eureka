@@ -9,7 +9,7 @@ import java.util.Map;
 
 /**
  * This rule checks to see if we have overrides for an instance and if we do then we return those.
- *
+ * 存在实例覆盖，返回覆盖状态，反之，不匹配
  * Created by Nikos Michalakis on 7/13/16.
  */
 public class OverrideExistsRule implements InstanceStatusOverrideRule {
@@ -26,6 +26,9 @@ public class OverrideExistsRule implements InstanceStatusOverrideRule {
     public StatusOverrideResult apply(InstanceInfo instanceInfo, Lease<InstanceInfo> existingLease, boolean isReplication) {
         InstanceInfo.InstanceStatus overridden = statusOverrides.get(instanceInfo.getId());
         // If there are instance specific overrides, then they win - otherwise the ASG status
+        /**
+         * 若覆盖状态存在，返回该实例最新的覆盖状态
+         */
         if (overridden != null) {
             logger.debug("The instance specific override for instance {} and the value is {}",
                     instanceInfo.getId(), overridden.name());

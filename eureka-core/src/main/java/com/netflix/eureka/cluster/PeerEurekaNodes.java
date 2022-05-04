@@ -35,15 +35,38 @@ public class PeerEurekaNodes {
 
     private static final Logger logger = LoggerFactory.getLogger(PeerEurekaNodes.class);
 
+    /**
+     * 应用实例注册表
+     */
     protected final PeerAwareInstanceRegistry registry;
+    /**
+     * server配置
+     */
     protected final EurekaServerConfig serverConfig;
+    /**
+     * client配置
+     */
     protected final EurekaClientConfig clientConfig;
+    /**
+     * server编解码
+     */
     protected final ServerCodecs serverCodecs;
+    /**
+     * 应用实例信息管理器
+     */
     private final ApplicationInfoManager applicationInfoManager;
-
+    /**
+     * server集群节点数组
+     */
     private volatile List<PeerEurekaNode> peerEurekaNodes = Collections.emptyList();
+    /**
+     * 服务地址数组
+     */
     private volatile Set<String> peerEurekaNodeUrls = Collections.emptySet();
 
+    /**
+     * 定时任务
+     */
     private ScheduledExecutorService taskExecutor;
 
     @Inject
@@ -67,12 +90,13 @@ public class PeerEurekaNodes {
     public List<PeerEurekaNode> getPeerEurekaNodes() {
         return peerEurekaNodes;
     }
-    
+
     public int getMinNumberOfAvailablePeers() {
         return serverConfig.getHealthStatusMinNumberOfAvailablePeers();
     }
 
     public void start() {
+        // 创建定时任务
         taskExecutor = Executors.newSingleThreadScheduledExecutor(
                 new ThreadFactory() {
                     @Override
@@ -84,11 +108,13 @@ public class PeerEurekaNodes {
                 }
         );
         try {
+            // 初始化集群节点信息
             updatePeerEurekaNodes(resolvePeerUrls());
             Runnable peersUpdateTask = new Runnable() {
                 @Override
                 public void run() {
                     try {
+                        // 更新集群节点信息
                         updatePeerEurekaNodes(resolvePeerUrls());
                     } catch (Throwable e) {
                         logger.error("Cannot update the replica Nodes", e);
@@ -96,6 +122,9 @@ public class PeerEurekaNodes {
 
                 }
             };
+            /**
+             * 定时任务设置执行间隔（默认10分钟）
+             */
             taskExecutor.scheduleWithFixedDelay(
                     peersUpdateTask,
                     serverConfig.getPeerEurekaNodesUpdateIntervalMs(),
@@ -124,15 +153,23 @@ public class PeerEurekaNodes {
 
     /**
      * Resolve peer URLs.
+     * 初始化集群节点信息
      *
      * @return peer URLs with node's own URL filtered out
      */
     protected List<String> resolvePeerUrls() {
+        /**
+         * 获取当前实例信息、可见区
+         */
         InstanceInfo myInfo = applicationInfoManager.getInfo();
         String zone = InstanceInfo.getZone(clientConfig.getAvailabilityZones(clientConfig.getRegion()), myInfo);
+        // 获取 eureka 客户端与之对话的所有 eureka 服务 url 的列表
         List<String> replicaUrls = EndpointUtils
                 .getDiscoveryServiceUrls(clientConfig, zone, new EndpointUtils.InstanceInfoBasedUrlRandomizer(myInfo));
 
+        /**
+         * 去除本身URL，剩余是需要同步的
+         */
         int idx = 0;
         while (idx < replicaUrls.size()) {
             if (isThisMyUrl(replicaUrls.get(idx))) {
@@ -156,11 +193,17 @@ public class PeerEurekaNodes {
             return;
         }
 
+        /**
+         * 计算出需要下线、新增的服务列表
+         */
         Set<String> toShutdown = new HashSet<>(peerEurekaNodeUrls);
         toShutdown.removeAll(newPeerUrls);
         Set<String> toAdd = new HashSet<>(newPeerUrls);
         toAdd.removeAll(peerEurekaNodeUrls);
 
+        /**
+         * 无需要下线、新增的，直接返回
+         */
         if (toShutdown.isEmpty() && toAdd.isEmpty()) { // No change
             return;
         }
@@ -168,6 +211,9 @@ public class PeerEurekaNodes {
         // Remove peers no long available
         List<PeerEurekaNode> newNodeList = new ArrayList<>(peerEurekaNodes);
 
+        /**
+         * 下线删除
+         */
         if (!toShutdown.isEmpty()) {
             logger.info("Removing no longer available peer nodes {}", toShutdown);
             int i = 0;
@@ -182,6 +228,9 @@ public class PeerEurekaNodes {
             }
         }
 
+        /**
+         * 新增添加到peerEurekaNodes
+         */
         // Add new peers
         if (!toAdd.isEmpty()) {
             logger.info("Adding new peer nodes {}", toAdd);
@@ -204,16 +253,15 @@ public class PeerEurekaNodes {
     }
 
     /**
+     * @param url the service url of the replica node that the check is made.
+     * @return true, if the url represents the current node which is trying to
+     * replicate, false otherwise.
      * @deprecated 2016-06-27 use instance version of {@link #isThisMyUrl(String)}
-     *
+     * <p>
      * Checks if the given service url contains the current host which is trying
      * to replicate. Only after the EIP binding is done the host has a chance to
      * identify itself in the list of replica nodes and needs to take itself out
      * of replication traffic.
-     *
-     * @param url the service url of the replica node that the check is made.
-     * @return true, if the url represents the current node which is trying to
-     *         replicate, false otherwise.
      */
     public static boolean isThisMe(String url) {
         InstanceInfo myInfo = ApplicationInfoManager.getInstance().getInfo();
@@ -229,7 +277,7 @@ public class PeerEurekaNodes {
      *
      * @param url the service url of the replica node that the check is made.
      * @return true, if the url represents the current node which is trying to
-     *         replicate, false otherwise.
+     * replicate, false otherwise.
      */
     public boolean isThisMyUrl(String url) {
         final String myUrlConfigured = serverConfig.getMyUrl();
@@ -238,11 +286,11 @@ public class PeerEurekaNodes {
         }
         return isInstanceURL(url, applicationInfoManager.getInfo());
     }
-    
+
     /**
      * Checks if the given service url matches the supplied instance
      *
-     * @param url the service url of the replica node that the check is made.
+     * @param url      the service url of the replica node that the check is made.
      * @param instance the instance to check the service url against
      * @return true, if the url represents the supplied instance, false otherwise.
      */

@@ -433,7 +433,7 @@ public class DefaultEurekaClientConfig implements EurekaClientConfig {
 
     /*
      * (non-Javadoc)
-     *
+     * 客户端是否只对单个 VIP 的注册表信息感兴趣。
      * @see com.netflix.discovery.EurekaClientConfig#getRegistryRefreshSingleVipAddress()
      */
     @Override

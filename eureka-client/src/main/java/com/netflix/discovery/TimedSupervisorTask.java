@@ -19,7 +19,7 @@ import org.slf4j.LoggerFactory;
 /**
  * A supervisor task that schedules subtasks while enforce a timeout.
  * Wrapped subtasks must be thread safe.
- *
+ * 监管定时任务的任务
  * @author David Qiang Liu
  */
 public class TimedSupervisorTask extends TimerTask {
@@ -32,12 +32,29 @@ public class TimedSupervisorTask extends TimerTask {
     private final LongGauge threadPoolLevelGauge;
 
     private final String name;
+    /**
+     * 定时任务服务
+     */
     private final ScheduledExecutorService scheduler;
+    /**
+     * 执行子任务线程池
+     */
     private final ThreadPoolExecutor executor;
+    /**
+     * 子任务执行超时时间
+     */
     private final long timeoutMillis;
+    /**
+     * 子任务
+     */
     private final Runnable task;
-
+    /**
+     * 当前子任务执行频率
+     */
     private final AtomicLong delay;
+    /**
+     * 子任务执行超时情况下使用
+     */
     private final long maxDelay;
 
     public TimedSupervisorTask(String name, ScheduledExecutorService scheduler, ThreadPoolExecutor executor,
@@ -65,14 +82,16 @@ public class TimedSupervisorTask extends TimerTask {
         try {
             future = executor.submit(task);
             threadPoolLevelGauge.set((long) executor.getActiveCount());
+            // 阻塞直到完成或超时
             future.get(timeoutMillis, TimeUnit.MILLISECONDS);  // block until done or timeout
+            // 设置 下一次任务执行频率
             delay.set(timeoutMillis);
             threadPoolLevelGauge.set((long) executor.getActiveCount());
             successCounter.increment();
         } catch (TimeoutException e) {
             logger.warn("task supervisor timed out", e);
             timeoutCounter.increment();
-
+            // 若超时，则两倍续约时间后再调用（60s 设置 下一次任务执行频率,server的问题，client不背锅）
             long currentDelay = delay.get();
             long newDelay = Math.min(maxDelay, currentDelay * 2);
             delay.compareAndSet(currentDelay, newDelay);
@@ -94,10 +113,11 @@ public class TimedSupervisorTask extends TimerTask {
 
             throwableCounter.increment();
         } finally {
+            // 取消 未完成的任务
             if (future != null) {
                 future.cancel(true);
             }
-
+            // 若，定时任务没有关闭，调度 下次任务
             if (!scheduler.isShutdown()) {
                 scheduler.schedule(this, delay.get(), TimeUnit.MILLISECONDS);
             }

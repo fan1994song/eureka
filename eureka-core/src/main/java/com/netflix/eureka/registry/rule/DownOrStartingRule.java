@@ -7,7 +7,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * This rule matches if the instance is DOWN or STARTING.
- *
+ * 实例状态覆盖规则:下线或开启覆盖规则
  * Created by Nikos Michalakis on 7/13/16.
  */
 public class DownOrStartingRule implements InstanceStatusOverrideRule {
@@ -22,6 +22,9 @@ public class DownOrStartingRule implements InstanceStatusOverrideRule {
         // the client says. The same is the case with replica as well.
         // The OUT_OF_SERVICE from the client or replica needs to be confirmed as well since the service may be
         // currently in SERVICE
+        /**
+         * 若实例状态不处于运行中、暂停服务，(启动中、下线)，则不适合提供服务，不匹配
+         */
         if ((!InstanceInfo.InstanceStatus.UP.equals(instanceInfo.getStatus()))
                 && (!InstanceInfo.InstanceStatus.OUT_OF_SERVICE.equals(instanceInfo.getStatus()))) {
             logger.debug("Trusting the instance status {} from replica or instance for instance {}",

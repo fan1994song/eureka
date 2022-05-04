@@ -45,7 +45,7 @@ import org.slf4j.LoggerFactory;
 /**
  * A <em>jersey</em> resource that handles request related to a particular
  * {@link com.netflix.discovery.shared.Application}.
- *
+ * server对于client的请求接收处理
  * @author Karthik Ranganathan, Greg Kim
  *
  */
@@ -138,7 +138,7 @@ public class ApplicationResource {
      *            {@link InstanceInfo} information of the instance.
      * @param isReplication
      *            a header parameter containing information whether this is
-     *            replicated from other nodes.
+     *            replicated from other nodes. 是否是复制节点发送的请求
      */
     @POST
     @Consumes({"application/json", "application/xml"})
@@ -146,6 +146,7 @@ public class ApplicationResource {
                                 @HeaderParam(PeerEurekaNode.HEADER_REPLICATION) String isReplication) {
         logger.debug("Registering instance {} (replication={})", info.getId(), isReplication);
         // validate that the instanceinfo contains all the necessary required fields
+        // 参数校验
         if (isBlank(info.getId())) {
             return Response.status(400).entity("Missing instanceId").build();
         } else if (isBlank(info.getHostName())) {
@@ -161,7 +162,7 @@ public class ApplicationResource {
         } else if (info.getDataCenterInfo().getName() == null) {
             return Response.status(400).entity("Missing dataCenterInfo Name").build();
         }
-
+        // 处理客户可能注册坏的DataCenterInfo缺少数据的情况(没有ID的情况)
         // handle cases where clients may be registering with bad DataCenterInfo with missing data
         DataCenterInfo dataCenterInfo = info.getDataCenterInfo();
         if (dataCenterInfo instanceof UniqueIdentifier) {

@@ -69,8 +69,15 @@ public class EurekaClientServerRestIntegrationTest {
 
     @BeforeClass
     public static void setUp() throws Exception {
+        /**
+         * 模拟从配置中读取属性信息
+         */
         injectEurekaConfiguration();
+        // 启动server
         startServer();
+        /**
+         * 创建server的配置文件
+         */
         createEurekaServerConfig();
 
         httpClientFactory = JerseyEurekaHttpClientFactory.newBuilder()
@@ -90,6 +97,9 @@ public class EurekaClientServerRestIntegrationTest {
                 serverCodecs,
                 eurekaServiceUrl
         );
+
+        System.err.println("等待...");
+        Thread.sleep(Long.MAX_VALUE);
     }
 
     @AfterClass
@@ -106,6 +116,10 @@ public class EurekaClientServerRestIntegrationTest {
         }
     }
 
+    /**
+     * 模拟Server启动流程
+     * @throws Exception
+     */
     @Test
     public void testRegistration() throws Exception {
         InstanceInfo instanceInfo = instanceInfoIt.next();
@@ -232,15 +246,27 @@ public class EurekaClientServerRestIntegrationTest {
     }
 
     private static void startServer() throws Exception {
-        File warFile = findWar();
+//        File warFile = findWar();
+//
+//        server = new Server(8080);
+//
+//        WebAppContext webapp = new WebAppContext();
+//        webapp.setContextPath("/");
+//        webapp.setWar(warFile.getAbsolutePath());
+//        server.setHandler(webapp);
+//
+//        server.start();
+//
+//        eurekaServiceUrl = "http://localhost:8080/v2";
 
         server = new Server(8080);
 
-        WebAppContext webapp = new WebAppContext();
-        webapp.setContextPath("/");
-        webapp.setWar(warFile.getAbsolutePath());
-        server.setHandler(webapp);
-
+        // TODO Thread.currentThread().getContextClassLoader() 获取不到路径，先暂时这样；
+        WebAppContext webAppCtx = new WebAppContext(new File("./eureka-server/src/main/webapp").getAbsolutePath(), "/");
+        webAppCtx.setDescriptor(new File("./eureka-server/src/main/webapp/WEB-INF/web.xml").getAbsolutePath());
+        webAppCtx.setResourceBase(new File("./eureka-server/src/main/resources").getAbsolutePath());
+        webAppCtx.setClassLoader(Thread.currentThread().getContextClassLoader());
+        server.setHandler(webAppCtx);
         server.start();
 
         eurekaServiceUrl = "http://localhost:8080/v2";

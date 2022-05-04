@@ -36,8 +36,14 @@ public class ZoneAffinityClusterResolver implements ClusterResolver<AwsEndpoint>
 
     private static final Logger logger = LoggerFactory.getLogger(ZoneAffinityClusterResolver.class);
 
+    /**
+     * 委托的解析器(ConfigClusterResolver)
+     */
     private final ClusterResolver<AwsEndpoint> delegate;
     private final String myZone;
+    /**
+     * 是否可亲和
+     */
     private final boolean zoneAffinity;
     private final EndpointRandomizer randomizer;
 

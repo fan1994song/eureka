@@ -114,6 +114,7 @@ public interface EurekaInstanceConfig {
      * {@link #getLeaseExpirationDurationInSeconds()}, eureka server will remove
      * the instance from its view, there by disallowing traffic to this
      * instance.
+     * 指示 eureka 客户端需要多长时间（以秒为单位）向 eureka 服务器发送心跳以表明它仍然活着
      *
      * <p>
      * Note that the instance could still not take traffic if it implements
@@ -128,7 +129,7 @@ public interface EurekaInstanceConfig {
      * Indicates the time in seconds that the eureka server waits since it
      * received the last heartbeat before it can remove this instance from its
      * view and there by disallowing traffic to this instance.
-     *
+     *  指示 eureka 服务器自收到最后一次心跳后等待的时间（以秒为单位），然后才能从其视图中删除此实例，并通过禁止流向此实例的流量。
      * <p>
      * Setting this value too long could mean that the traffic could be routed
      * to the instance even though the instance is not alive. Setting this value

@@ -21,7 +21,14 @@ public class LeaseExistsRule implements InstanceStatusOverrideRule {
         // This is for backward compatibility until all applications have ASG
         // names, otherwise while starting up
         // the client status may override status replicated from other servers
+        /**
+         * 非eureka-server请求
+         */
         if (!isReplication) {
+            /**
+             * 若租约存在，且租约实例状态等于 运行中、OUT_OF_SERVICE，则匹配实例状态
+             * （禁止 Eureka-Client 主动在这两个状态之间切换。如果要切换，使用应用实例覆盖状态变更与删除接口）
+             */
             InstanceInfo.InstanceStatus existingStatus = null;
             if (existingLease != null) {
                 existingStatus = existingLease.getHolder().getStatus();

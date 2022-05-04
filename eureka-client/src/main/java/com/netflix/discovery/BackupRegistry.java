@@ -23,6 +23,7 @@ import com.netflix.discovery.shared.Applications;
  * A simple contract for <em>eureka</em> clients to fallback for getting
  * registry information in case eureka clients are unable to retrieve this
  * information from any of the <em>eureka</em> servers.
+ * 一个简单的合同，让eureka客户端回退以获取注册信息，以防eureka客户端无法从任何尤里卡服务器检索此信息
  *
  * <p>
  * This is normally not required, but for applications that cannot exist without

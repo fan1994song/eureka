@@ -109,7 +109,7 @@ public class ApplicationsResource {
      * @param regionsStr A comma separated list of remote regions from which the instances will also be returned.
      *                   The applications returned from the remote region can be limited to the applications
      *                   returned by {@link EurekaServerConfig#getRemoteRegionAppWhitelist(String)}
-     *
+     * server端，接收全量获取请求
      * @return a response containing information about all {@link com.netflix.discovery.shared.Applications}
      *         from the {@link AbstractInstanceRegistry}.
      */
@@ -120,7 +120,7 @@ public class ApplicationsResource {
                                   @HeaderParam(EurekaAccept.HTTP_X_EUREKA_ACCEPT) String eurekaAccept,
                                   @Context UriInfo uriInfo,
                                   @Nullable @QueryParam("regions") String regionsStr) {
-
+        // 增加监控信息
         boolean isRemoteRegionRequested = null != regionsStr && !regionsStr.isEmpty();
         String[] regions = null;
         if (!isRemoteRegionRequested) {
@@ -131,13 +131,18 @@ public class ApplicationsResource {
             EurekaMonitors.GET_ALL_WITH_REMOTE_REGIONS.increment();
         }
 
+        // 判断当前server是否可以访问（启动完成，但是未处于就绪( Ready )状态，不接受请求全量应用注册信息的请求）
         // Check if the server allows the access to the registry. The server can
         // restrict access if it is not
         // ready to serve traffic depending on various reasons.
         if (!registry.shouldAllowAccess(isRemoteRegionRequested)) {
             return Response.status(Status.FORBIDDEN).build();
         }
+
+        // version版本，默认V2
         CurrentRequestVersion.set(Version.toEnum(version));
+
+        // 返回数据格式JSON、XML，默认JSON
         KeyType keyType = Key.KeyType.JSON;
         String returnMediaType = MediaType.APPLICATION_JSON;
         if (acceptHeader == null || !acceptHeader.contains(HEADER_JSON_VALUE)) {
@@ -145,6 +150,7 @@ public class ApplicationsResource {
             returnMediaType = MediaType.APPLICATION_XML;
         }
 
+        // 响应缓存KEY
         Key cacheKey = new Key(Key.EntityType.Application,
                 ResponseCacheImpl.ALL_APPS,
                 keyType, CurrentRequestVersion.get(), EurekaAccept.fromString(eurekaAccept), regions
@@ -166,7 +172,7 @@ public class ApplicationsResource {
 
     /**
      * Get information about all delta changes in {@link com.netflix.discovery.shared.Applications}.
-     *
+     * server端，接收增量获取请求（allApps 计算一致性哈希值。通过这个全量应用集合的哈希值，Eureka-Client 获取到增量应用集合并合并后，就可以比对啦）
      * <p>
      * The delta changes represent the registry information change for a period
      * as configured by

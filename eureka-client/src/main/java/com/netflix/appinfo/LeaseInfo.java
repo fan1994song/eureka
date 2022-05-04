@@ -44,10 +44,21 @@ public class LeaseInfo {
     private int renewalIntervalInSecs = DEFAULT_LEASE_RENEWAL_INTERVAL;
     private int durationInSecs = DEFAULT_LEASE_DURATION;
 
-    // Server populated
+    /**
+     * 注册时间戳
+     */
     private long registrationTimestamp;
+    /**
+     * 上次续约时间戳
+     */
     private long lastRenewalTimestamp;
+    /**
+     * 取消注册时间戳
+     */
     private long evictionTimestamp;
+    /**
+     * 开始服务时间戳
+     */
     private long serviceUpTimestamp;
 
     public static final class Builder {
@@ -227,7 +238,7 @@ public class LeaseInfo {
 
     /**
      * Returns client specified setting for renew interval.
-     *
+     * 返回客户端指定的更新间隔设置（续约时间，默认30秒）
      * @return time in milliseconds since epoch.
      */
     public int getRenewalIntervalInSecs() {
@@ -237,7 +248,7 @@ public class LeaseInfo {
     /**
      * Returns client specified setting for eviction (e.g. how long to wait w/o
      * renewal event)
-     *
+     * 返回客户端指定的驱逐设置（例如，在没有续订事件的情况下等待多长时间），一般90秒
      * @return time in milliseconds since epoch.
      */
     public int getDurationInSecs() {

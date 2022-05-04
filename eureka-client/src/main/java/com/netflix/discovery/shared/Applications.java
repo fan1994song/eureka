@@ -225,7 +225,7 @@ public class Applications {
     /**
      * Gets the hash code for this <em>applications</em> instance. Used for
      * comparison of instances between eureka server and eureka client.
-     *
+     * 得到调和hashcode
      * @return the internal hash code representation indicating the information
      *         about the instances.
      */
@@ -239,7 +239,7 @@ public class Applications {
     /**
      * Populates the provided instance count map. The instance count map is used
      * as part of the general app list synchronization mechanism.
-     * 
+     * 得到所有实例状态名及实例的机器数
      * @param instanceCountMap
      *            the map to populate
      */
@@ -256,8 +256,8 @@ public class Applications {
     /**
      * Gets the reconciliation hashcode. The hashcode is used to determine
      * whether the applications list has changed since the last time it was
-     * acquired.
-     * 
+     * acquired. hashmap默认key哈希值排序
+     * DOWN_2_UP_8_
      * @param instanceCountMap
      *            the instance count map to use for generating the hash
      * @return the hash code for this instance

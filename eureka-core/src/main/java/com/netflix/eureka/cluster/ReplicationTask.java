@@ -31,6 +31,12 @@ abstract class ReplicationTask {
     public void handleSuccess() {
     }
 
+    /**
+     * 异常日志输出
+     * @param statusCode
+     * @param responseEntity
+     * @throws Throwable
+     */
     public void handleFailure(int statusCode, Object responseEntity) throws Throwable {
         logger.warn("The replication of task {} failed with response code {}", getTaskName(), statusCode);
     }

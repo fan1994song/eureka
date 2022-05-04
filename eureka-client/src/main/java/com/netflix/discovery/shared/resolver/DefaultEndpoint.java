@@ -26,12 +26,31 @@ import java.util.List;
  */
 public class DefaultEndpoint implements EurekaEndpoint {
 
+    /**
+     * 网络地址
+     */
     protected final String networkAddress;
+    /**
+     * 端口
+     */
     protected final int port;
+    /**
+     * 是否安全（http、https）
+     */
     protected final boolean isSecure;
+    /**
+     * 相对地址
+     */
     protected final String relativeUri;
+    /**
+     * 完成的服务URL
+     */
     protected final String serviceUrl;
 
+    /**
+     * 服务URL解析出其他属性
+     * @param serviceUrl
+     */
     public DefaultEndpoint(String serviceUrl) {
         this.serviceUrl = serviceUrl;
 
@@ -46,6 +65,13 @@ public class DefaultEndpoint implements EurekaEndpoint {
         }
     }
 
+    /**
+     * 其他属性拼凑出服务URL
+     * @param networkAddress
+     * @param port
+     * @param isSecure
+     * @param relativeUri
+     */
     public DefaultEndpoint(String networkAddress, int port, boolean isSecure, String relativeUri) {
         this.networkAddress = networkAddress;
         this.port = port;

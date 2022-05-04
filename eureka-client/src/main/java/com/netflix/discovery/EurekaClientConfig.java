@@ -66,14 +66,14 @@ public interface EurekaClientConfig {
     /**
      * Indicates how often(in seconds) to replicate instance changes to be
      * replicated to the eureka server.
-     *
+     * 向 Eureka-Server 同步应用实例信息变化频率，单位：秒
      * @return the instance replication interval in seconds.
      */
     int getInstanceInfoReplicationIntervalSeconds();
 
     /**
      * Indicates how long initially (in seconds) to replicate instance info
-     * to the eureka server
+     * to the eureka server 最初将实例信息复制到 eureka 服务器的时间（以秒为单位
      */
     int getInitialInstanceInfoReplicationIntervalSeconds();
 
@@ -381,7 +381,7 @@ public interface EurekaClientConfig {
 
     /**
      * Gets the region (used in AWS datacenters) where this instance resides.
-     *
+     * 获取此实例所在的区域
      * @return AWS region where this instance resides.
      */
     String getRegion();
@@ -451,7 +451,7 @@ public interface EurekaClientConfig {
 
     /**
      * Indicates whether this client should fetch eureka registry information from eureka server.
-     *
+     * 指示此客户端是否应从 eureka 服务器获取 eureka 注册表信息
      * @return {@code true} if registry information has to be fetched, {@code false} otherwise.
      */
     boolean shouldFetchRegistry();
@@ -487,7 +487,7 @@ public interface EurekaClientConfig {
     /**
      * Heartbeat executor exponential back off related property.
      * It is a maximum multiplier value for retry delay, in case where a sequence of timeouts
-     * occurred.
+     * occurred. 心跳执行器指数回退相关属性。 它是重试延迟的最大乘数，以防发生一系列超时
      *
      * @return maximum multiplier value for retry delay
      */

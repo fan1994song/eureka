@@ -20,6 +20,7 @@ import static com.netflix.eureka.cluster.protocol.ReplicationInstance.Replicatio
 
 /**
  * @author Tomasz Bak
+ * 同步操作任务处理器
  */
 class ReplicationTaskProcessor implements TaskProcessor<ReplicationTask> {
 
@@ -75,15 +76,24 @@ class ReplicationTaskProcessor implements TaskProcessor<ReplicationTask> {
 
     @Override
     public ProcessingResult process(List<ReplicationTask> tasks) {
+        // 创建批量提交同步操作任务的请求对象
         ReplicationList list = createReplicationListOf(tasks);
         try {
+            // 发起批量提交同步操作任务请求
             EurekaHttpResponse<ReplicationListResponse> response = replicationClient.submitBatchUpdates(list);
+            // 响应状态
             int statusCode = response.getStatusCode();
+            /**
+             * 处理响应结果：判断请求是否成功
+             */
             if (!isSuccess(statusCode)) {
+                // 状态码 503 ，目前 Eureka-Server 返回 503 的原因是被限流
                 if (statusCode == 503) {
                     logger.warn("Server busy (503) HTTP status code received from the peer {}; rescheduling tasks after delay", peerId);
+                    // 瞬时错误，延迟一段时间后，再次执行
                     return ProcessingResult.Congestion;
                 } else {
+                    // 非预期状态码，执行异常，任务丢弃
                     // Unexpected error returned from the server. This should ideally never happen.
                     logger.error("Batch update failure with HTTP status code {}; discarding {} replication tasks", statusCode, tasks.size());
                     return ProcessingResult.PermanentError;
@@ -92,14 +102,17 @@ class ReplicationTaskProcessor implements TaskProcessor<ReplicationTask> {
                 handleBatchResponse(tasks, response.getEntity().getResponseList());
             }
         } catch (Throwable e) {
+            // 请求超时，瞬时错误，延迟重试
             if (maybeReadTimeOut(e)) {
                 logger.error("It seems to be a socket read timeout exception, it will retry later. if it continues to happen and some eureka node occupied all the cpu time, you should set property 'eureka.server.peer-node-read-timeout-ms' to a bigger value", e);
             	//read timeout exception is more Congestion then TransientError, return Congestion for longer delay 
                 return ProcessingResult.Congestion;
             } else if (isNetworkConnectException(e)) {
+                // 网络异常，延迟充实
                 logNetworkErrorSample(null, e);
                 return ProcessingResult.TransientError;
             } else {
+                // 永久错误，任务丢弃
                 logger.error("Not re-trying this exception because it does not seem to be a network exception", e);
                 return ProcessingResult.PermanentError;
             }
@@ -128,6 +141,7 @@ class ReplicationTaskProcessor implements TaskProcessor<ReplicationTask> {
     }
 
     private void handleBatchResponse(List<ReplicationTask> tasks, List<ReplicationInstanceResponse> responseList) {
+        // 任务列表和响应的list数量不一致，输出异常日志，不做处理
         if (tasks.size() != responseList.size()) {
             // This should ideally never happen unless there is a bug in the software.
             logger.error("Batch response size different from submitted task list ({} != {}); skipping response analysis", responseList.size(), tasks.size());
@@ -140,12 +154,14 @@ class ReplicationTaskProcessor implements TaskProcessor<ReplicationTask> {
 
     private void handleBatchResponse(ReplicationTask task, ReplicationInstanceResponse response) {
         int statusCode = response.getStatusCode();
+        // 状态码在成功范围
         if (isSuccess(statusCode)) {
             task.handleSuccess();
             return;
         }
 
         try {
+            // 否则，执行失败
             task.handleFailure(response.getStatusCode(), response.getResponseEntity());
         } catch (Throwable e) {
             logger.error("Replication task {} error handler failure", task.getTaskName(), e);

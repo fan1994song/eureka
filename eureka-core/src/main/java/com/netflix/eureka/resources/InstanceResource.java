@@ -89,7 +89,7 @@ public class InstanceResource {
 
     /**
      * A put request for renewing lease from a client instance.
-     *
+     * 从客户端实例更新租约的请求（客户端续约）
      * @param isReplication
      *            a header parameter containing information whether this is
      *            replicated from other nodes.
@@ -111,13 +111,14 @@ public class InstanceResource {
         boolean isFromReplicaNode = "true".equals(isReplication);
         boolean isSuccess = registry.renew(app.getName(), id, isFromReplicaNode);
 
+        // 在注册表中找不到的，立即要求注册（续约失败）
         // Not found in the registry, immediately ask for a register
         if (!isSuccess) {
             logger.warn("Not Found (Renew): {} - {}", app.getName(), id);
             return Response.status(Status.NOT_FOUND).build();
         }
         // Check if we need to sync based on dirty time stamp, the client
-        // instance might have changed some value
+        // instance might have changed some value（检查我们是否需要基于脏时间戳进行同步，客户端实例可能已经更改了一些值）
         Response response;
         if (lastDirtyTimestamp != null && serverConfig.shouldSyncWhenTimestampDiffers()) {
             response = this.validateDirtyTimestamp(Long.valueOf(lastDirtyTimestamp), isFromReplicaNode);
@@ -137,7 +138,7 @@ public class InstanceResource {
 
     /**
      * Handles {@link InstanceStatus} updates.
-     *
+     * 实例状态变更（apps/${APP_NAME}/${INSTANCE_ID}/status）
      * <p>
      * The status updates are normally done for administrative purposes to
      * change the instance status between {@link InstanceStatus#UP} and
@@ -162,6 +163,7 @@ public class InstanceResource {
             @HeaderParam(PeerEurekaNode.HEADER_REPLICATION) String isReplication,
             @QueryParam("lastDirtyTimestamp") String lastDirtyTimestamp) {
         try {
+            // 根据app名称和实例ID在server的注册信息中查询，若为空，则返回状态404
             if (registry.getInstanceByAppAndId(app.getName(), id) == null) {
                 logger.warn("Instance not found: {}/{}", app.getName(), id);
                 return Response.status(Status.NOT_FOUND).build();
@@ -187,7 +189,7 @@ public class InstanceResource {
     /**
      * Removes status override for an instance, set with
      * {@link #statusUpdate(String, String, String)}.
-     *
+     * 应用实例覆盖状态删除接口
      * @param isReplication
      *            a header parameter containing information whether this is
      *            replicated from other nodes.
@@ -203,6 +205,7 @@ public class InstanceResource {
             @QueryParam("value") String newStatusValue,
             @QueryParam("lastDirtyTimestamp") String lastDirtyTimestamp) {
         try {
+            // 查不到404
             if (registry.getInstanceByAppAndId(app.getName(), id) == null) {
                 logger.warn("Instance not found: {}/{}", app.getName(), id);
                 return Response.status(Status.NOT_FOUND).build();
@@ -267,7 +270,7 @@ public class InstanceResource {
 
     /**
      * Handles cancellation of leases for this particular instance.
-     *
+     * 应用下线
      * @param isReplication
      *            a header parameter containing information whether this is
      *            replicated from other nodes.
@@ -278,6 +281,7 @@ public class InstanceResource {
     public Response cancelLease(
             @HeaderParam(PeerEurekaNode.HEADER_REPLICATION) String isReplication) {
         try {
+            // 应用名称、ID都在请求路径上，故可以获取到
             boolean isSuccess = registry.cancel(app.getName(), id,
                 "true".equals(isReplication));
 
@@ -301,7 +305,9 @@ public class InstanceResource {
         if (appInfo != null) {
             if ((lastDirtyTimestamp != null) && (!lastDirtyTimestamp.equals(appInfo.getLastDirtyTimestamp()))) {
                 Object[] args = {id, appInfo.getLastDirtyTimestamp(), lastDirtyTimestamp, isReplication};
-
+                // app上次脏的时间戳若大于server的缓存的上次脏的时间戳，则说明是新起的应用，返回404，client重新注册
+                // 官方：意味着请求方( 可能是 Eureka-Client ，也可能是 Eureka-Server 集群内的其他 Server )存在 InstanceInfo 和
+                // Eureka-Server 的 InstanceInfo 的数据不一致，返回 404 响应。请求方收到 404 响应后重新发起注册
                 if (lastDirtyTimestamp > appInfo.getLastDirtyTimestamp()) {
                     logger.debug(
                             "Time to sync, since the last dirty timestamp differs -"
@@ -309,6 +315,7 @@ public class InstanceResource {
                             args);
                     return Response.status(Status.NOT_FOUND).build();
                 } else if (appInfo.getLastDirtyTimestamp() > lastDirtyTimestamp) {
+                    // 集群同步时，关注***
                     // In the case of replication, send the current instance info in the registry for the
                     // replicating node to sync itself with this one.
                     if (isReplication) {

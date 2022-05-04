@@ -34,6 +34,7 @@ import org.slf4j.LoggerFactory;
 import static com.netflix.discovery.shared.transport.EurekaHttpResponse.anEurekaHttpResponse;
 
 /**
+ * Eureka-Server 请求 其它的Eureka-Server 的网络通信
  * @author Tomasz Bak
  */
 public class JerseyReplicationClient extends AbstractJerseyEurekaHttpClient implements HttpReplicationClient {
@@ -57,6 +58,7 @@ public class JerseyReplicationClient extends AbstractJerseyEurekaHttpClient impl
     /**
      * Compared to regular heartbeat, in the replication channel the server may return a more up to date
      * instance copy.
+     * 在复制通道中，服务器可能会返回更新的实例副本
      */
     @Override
     public EurekaHttpResponse<InstanceInfo> sendHeartBeat(String appName, String id, InstanceInfo info, InstanceStatus overriddenStatus) {
@@ -110,6 +112,7 @@ public class JerseyReplicationClient extends AbstractJerseyEurekaHttpClient impl
     public EurekaHttpResponse<ReplicationListResponse> submitBatchUpdates(ReplicationList replicationList) {
         ClientResponse response = null;
         try {
+            // peerreplication/batch/ 一次性将批量( 多个 )的同步操作任务发起请求
             response = jerseyApacheClient.resource(serviceUrl)
                     .path(PeerEurekaNode.BATCH_URL_PATH)
                     .accept(MediaType.APPLICATION_JSON_TYPE)

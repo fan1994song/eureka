@@ -41,11 +41,11 @@ public class EurekaConfigBasedInstanceInfoProvider implements Provider<InstanceI
     public EurekaConfigBasedInstanceInfoProvider(EurekaInstanceConfig config) {
         this.config = config;
     }
-
+    // 通过构建InstanceInfo的LeaseInfo.Builder、InstanceInfo.Builder的属性对象，完成InstanceInfo的创建
     @Override
     public synchronized InstanceInfo get() {
         if (instanceInfo == null) {
-            // Build the lease information to be passed to the server based on config
+            // Build the lease information to be passed to the server based on config 根据eureka的Client配置构建要传递给服务器的租约信息
             LeaseInfo.Builder leaseInfoBuilder = LeaseInfo.Builder.newBuilder()
                     .setRenewalIntervalInSecs(config.getLeaseRenewalIntervalInSeconds())
                     .setDurationInSecs(config.getLeaseExpirationDurationInSeconds());
@@ -57,7 +57,7 @@ public class EurekaConfigBasedInstanceInfoProvider implements Provider<InstanceI
             // Builder the instance information to be registered with eureka server
             InstanceInfo.Builder builder = InstanceInfo.Builder.newBuilder(vipAddressResolver);
 
-            // set the appropriate id for the InstanceInfo, falling back to datacenter Id if applicable, else hostname
+            // set the appropriate id for the InstanceInfo, falling back to datacenter Id if applicable, else hostname 设置instanceId，有若配置读取配置，否则以当前hostname作为实例ID
             String instanceId = config.getInstanceId();
             if (instanceId == null || instanceId.isEmpty()) {
                 DataCenterInfo dataCenterInfo = config.getDataCenterInfo();
@@ -67,7 +67,7 @@ public class EurekaConfigBasedInstanceInfoProvider implements Provider<InstanceI
                     instanceId = config.getHostName(false);
                 }
             }
-
+            // 设置客户端默认地址，主机名或ID地址
             String defaultAddress;
             if (config instanceof RefreshableInstanceConfig) {
                 // Refresh AWS data center info, and return up to date address
@@ -112,7 +112,7 @@ public class EurekaConfigBasedInstanceInfoProvider implements Provider<InstanceI
                          InstanceStatus.UP);
             }
 
-            // Add any user-specific metadata information
+            // Add any user-specific metadata information 添加一些特定于客户端的元数据信息
             for (Map.Entry<String, String> mapEntry : config.getMetadataMap().entrySet()) {
                 String key = mapEntry.getKey();
                 String value = mapEntry.getValue();

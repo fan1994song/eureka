@@ -315,10 +315,22 @@ public class InstanceInfo {
 
 
     public enum InstanceStatus {
+        /**
+         * 就绪
+         */
         UP, // Ready to receive traffic
+        /**
+         * 下线
+         */
         DOWN, // Do not send traffic- healthcheck callback failed
+        /**
+         * 启动
+         */
         STARTING, // Just about starting- initializations to be done - do not
         // send traffic
+        /**
+         * 暂停服务？
+         */
         OUT_OF_SERVICE, // Intentionally shutdown for traffic
         UNKNOWN;
 
@@ -1239,7 +1251,7 @@ public class InstanceInfo {
 
     /**
      * Sets the dirty flag so that the instance information can be carried to
-     * the discovery server on the next heartbeat.
+     * the discovery server on the next heartbeat. 设置脏标志，以便在下一次心跳时将实例信息携带到发现服务器
      */
     public synchronized void setIsDirty() {
         isInstanceInfoDirty = true;

@@ -28,6 +28,9 @@ import com.netflix.discovery.shared.transport.EurekaHttpResponse;
  */
 public abstract class EurekaHttpClientDecorator implements EurekaHttpClient {
 
+    /**
+     * 请求类型枚举类
+     */
     public enum RequestType {
         Register,
         Cancel,

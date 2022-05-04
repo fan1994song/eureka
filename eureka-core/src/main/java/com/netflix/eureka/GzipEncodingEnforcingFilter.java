@@ -34,6 +34,7 @@ public class GzipEncodingEnforcingFilter implements Filter {
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
         HttpServletRequest httpRequest = (HttpServletRequest) request;
+        // GZIP 编码过滤器，get请求的编码集若是gzip，直接设置406异常码返回
         if ("GET".equals(httpRequest.getMethod())) {
             String acceptEncoding = httpRequest.getHeader(HttpHeaders.ACCEPT_ENCODING);
             if (acceptEncoding == null) {

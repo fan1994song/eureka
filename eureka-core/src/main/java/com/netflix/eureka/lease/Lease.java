@@ -58,6 +58,7 @@ public class Lease<T> {
      * Renew the lease, use renewal duration if it was specified by the
      * associated {@link T} during registration, otherwise default duration is
      * {@link #DEFAULT_DURATION_IN_SECS}.
+     * 并发续约请求，过期时间也只是稍微增加，没有实质影响
      */
     public void renew() {
         lastUpdateTimestamp = System.currentTimeMillis() + duration;
@@ -104,6 +105,10 @@ public class Lease<T> {
      * what it should be, the expiry will actually be 2 * duration. This is a minor bug and should only affect
      * instances that ungracefully shutdown. Due to possible wide ranging impact to existing usage, this will
      * not be fixed.
+     * 过期时间大于0的或者 当前时间 超过 上次续约加上客户端最大驱逐时间(90秒)+补偿时间
+     *
+     * 在不考虑 additionalLeaseMs 参数的情况下，租约过期时间比预期多了一个 duration，原因在于 #renew() 方法错误的设置
+     * lastUpdateTimestamp = System.currentTimeMillis() + duration，正确的设置应该是 lastUpdateTimestamp = System.currentTimeMillis()
      *
      * @param additionalLeaseMs any additional lease time to add to the lease evaluation in ms.
      */
